@@ -1,0 +1,38 @@
+version: '3'
+
+tasks:
+  up:
+    desc: Build and start the full stack (postgres, toggle-service, adobe demo site)
+    cmds: [docker compose up --build]
+
+  down:
+    desc: Stop the stack and remove containers
+    cmds: [docker compose down]
+
+  test:all:
+    desc: Run every project's test suite
+    cmds:
+      - task: test:migration-platform
+      - task: test:toggle-service
+      - task: test:flutter-dsm
+
+  test:migration-platform:
+    desc: Run migration-platform's pytest suite
+    dir: apps/migration-platform
+    cmds:
+      - source .venv/bin/activate && pytest -v
+
+  test:toggle-service:
+    desc: Run config-toggle-service's Jest suite
+    dir: services/config-toggle-service
+    cmds: [npm test]
+
+  test:flutter-dsm:
+    desc: Run flutter-dsm's test suite across all Melos packages
+    dir: packages/flutter-dsm
+    cmds: [melos run test]
+
+  lint:toggle-service:
+    desc: Lint config-toggle-service
+    dir: services/config-toggle-service
+    cmds: [npm run lint]

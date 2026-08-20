@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: migration_platform
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports: ["5432:5432"]
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  toggle-service:
+    build: ./services/config-toggle-service
+    ports: ["3000:3000"]
+    volumes:
+      - toggle-data:/app/src/data   # flags.json (+ flag_audit.json) persist across restarts
+    environment:
+      NODE_ENV: production
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  adobe-demo-site:
+    build: ./apps/adobe-analytics-demo/demo-site
+    ports: ["8000:8000"]
+    environment:
+      TOGGLE_SERVICE_URL: http://toggle-service:3000
+    depends_on:
+      toggle-service:
+        condition: service_healthy
+
+volumes:
+  toggle-data:
+  pg-data:
